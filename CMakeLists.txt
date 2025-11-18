@@ -58,3 +58,25 @@ target_include_directories(bootstrapping PUBLIC
 
 target_link_libraries(bootstrapping PRIVATE ntl gmp m pthread SEAL::seal)
 
+# my Nexus
+add_executable(
+    newmain
+    ${CMAKE_SOURCE_DIR}/src/newmain.cpp
+    ${CMAKE_SOURCE_DIR}/src/gelu.cpp
+    ${CMAKE_SOURCE_DIR}/src/layer_norm.cpp
+    ${CMAKE_SOURCE_DIR}/src/ckks_evaluator.cpp
+    ${CMAKE_SOURCE_DIR}/src/softmax.cpp
+    ${CMAKE_SOURCE_DIR}/src/matrix_mul_opt.cpp
+    ${CMAKE_SOURCE_DIR}/src/argmax.cpp
+    ${COMMON_SOURCE_FILES}
+    ${BOOTSTRAPPING_SOURCE_FILES}
+)
+
+target_include_directories(newmain PUBLIC
+    /usr/local/include
+    /usr/local/include/NTL
+    ${COMMON_HEADER_DIR}
+    ${BOOTSTRAPPING_HEADER_DIR}
+)
+
+target_link_libraries(newmain PRIVATE ntl gmp m pthread SEAL::seal)

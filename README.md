@@ -1,3 +1,18 @@
+# myNEXUS
+
+## Installing myNEXUS
+- Dependency: [NumCpp](https://github.com/dpilger26/NumCpp), libboost-all-dev (install via apt-get)
+- Then follow the installation procedure of original NEXUS below
+
+## How to Run
+- `./build/bin/newmain`
+
+<br/>
+
+Following is the documentation of original NEXUS
+
+<br/>
+
 # NEXUS
 *NEXUS* is the first non-interactive protocol for secure transformer inference.
 
