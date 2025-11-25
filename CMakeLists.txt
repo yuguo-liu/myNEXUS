@@ -68,6 +68,9 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/src/softmax.cpp
     ${CMAKE_SOURCE_DIR}/src/matrix_mul_opt.cpp
     ${CMAKE_SOURCE_DIR}/src/argmax.cpp
+    ${CMAKE_SOURCE_DIR}/src/server.cpp
+    ${CMAKE_SOURCE_DIR}/src/client.cpp
+    ${CMAKE_SOURCE_DIR}/src/pretty_print.cpp
     ${COMMON_SOURCE_FILES}
     ${BOOTSTRAPPING_SOURCE_FILES}
 )
