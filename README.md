@@ -5,7 +5,7 @@
 - Then follow the installation procedure of original NEXUS below
 
 ## How to Run
-- `./build/bin/newmain`
+- `./build/bin/newmain <k> <m> <n> <party> <ip> <port>`
 
 <br/>
 
