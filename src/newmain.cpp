@@ -17,19 +17,25 @@ using namespace std::chrono;
 vector<int> MM_COEFF_MODULI = {60, 40, 60};
 double SCALE = pow(2.0, 40);
 
-void test_matrix_mul(vector<vector<double>> &a, vector<vector<double>> &b, MMEvaluatorOpt &mme) {
-    vector<vector<double>> res;
-    mme.matrix_mul_in_plain(a, b, res);
 
-    for (vector<double> v : res) {
-        for (double e : v) {
-            cout << e << " ";
-        }
-        cout << endl;
+int main(int argc, char** argv) {
+    // get the parameter
+    int k, m, n, party;            // matrix #1 (k x m), matrix #2 (m x n)
+    if (argc < 5) {
+        cerr << "[Err] Invalid input\n Valid input should be ./newmain <k> <m> <n>" << endl;
+        exit(-1);
     }
-}
 
-int main() {
+    k = stoi(argv[1]);
+    m = stoi(argv[2]);
+    n = stoi(argv[3]);
+    party = stoi(argv[4]);
+
+    cout << "[Info] Get the parameter from party " << to_string(party) << ": matrix #1 (" \
+            << to_string(k) << " x " << to_string(m) << \
+            "), matrix #2 (" << to_string(m) << " x " << to_string(n) << ")" << endl;
+
+    // setup for ckks
     long logN = 13;
     size_t poly_modulus_degree = 1 << logN;
 
@@ -61,17 +67,5 @@ int main() {
     CKKSEvaluator ckks_evaluator(context, encryptor, decryptor, encoder, evaluator, SCALE, relin_keys, galois_keys);
     MMEvaluatorOpt mme(ckks_evaluator);
 
-    // test for 
-    vector<vector<double>> A = {
-        {1, 2, 3},
-        {4, 5, 6}
-    };
     
-    vector<vector<double>> B = {
-        {7, 8},
-        {9, 10},
-        {11, 12}
-    };
-
-    test_matrix_mul(A, B, mme);
 }
