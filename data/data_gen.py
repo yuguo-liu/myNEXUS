@@ -62,7 +62,7 @@ def multiply_matrices(matrix1, matrix2):
     return np.dot(matrix1, matrix2)
 
 
-k, m, n = 4096, 768, 64
+k, m, n = 1, 2, 3
 
 matrix_a, matrix_b = generate_matrices(k, m, n)
 matrix_rnd = generate_matrix(k, m)

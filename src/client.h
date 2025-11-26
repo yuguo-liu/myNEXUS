@@ -39,45 +39,21 @@ private:
                                                encoder, evaluator, SCALE, relin_keys, galois_keys */
     MMEvaluatorOpt* mme;                // the evaluator for matrix-matrix multiplication
 
+    // matrix
+    vector<vector<double>> random_matrix;       // the matrix to mask the `client matrix`
+    vector<vector<double>> cinput_matrix;       // the matrix of private input
+
     // some constants
     vector<int> MM_COEFF_MODULI = {60, 40, 60};
     double SCALE = pow(2.0, 40);
 
 public:
-    Client(string ip, int port, int seed) {
-        // initialize the communication channel
-        comm = new Channel(ip, port, seed);
-
-        // initialize the HE params and evaluator
-        long logN = 13;
-        size_t poly_modulus_degree = 1 << logN;
-
-        params = new EncryptionParameters(scheme_type::ckks);
-        params->set_poly_modulus_degree(poly_modulus_degree);
-        params->set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, MM_COEFF_MODULI));
-
-        context = new SEALContext(*params, true, sec_level_type::none);
-
-        keygen = new KeyGenerator(*context);
-        secret_key = keygen->secret_key();
-        keygen->create_public_key(public_key);
-        keygen->create_relin_keys(relin_keys);
-
-        vector<uint32_t> rots;
-        for (int i = 0; i < logN; i++) {
-            rots.push_back((poly_modulus_degree + exponentiate_uint(2, i)) / exponentiate_uint(2, i));
-        }
-        keygen->create_galois_keys(rots, galois_keys);
-
-        encryptor = new Encryptor(*context, public_key);
-        encoder = new CKKSEncoder(*context);
-        evaluator = new Evaluator(*context, *encoder);
-        decryptor = new Decryptor(*context, secret_key);
-
-        ckks_evaluator = new CKKSEvaluator(*context, *encryptor, *decryptor, *encoder, *evaluator, SCALE, relin_keys, galois_keys);
-        mme = new MMEvaluatorOpt(*ckks_evaluator);
-
-        INFO_PRINT("Initialization finished.");
-    }
-
+    // initial the client
+    Client(string ip, int port, int seed);
+    // clean up when client is deleted
+    ~Client();
+    // load the random matrix
+    void readRandomMatrix(int row, int col);
+    // load the input matrix of client
+    void readCInputMatrix(int row, int col);
 };

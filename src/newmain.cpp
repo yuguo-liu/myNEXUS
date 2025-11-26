@@ -23,5 +23,7 @@ int main(int argc, char** argv) {
     
     if (party == 0) {
         Client client(ip, port, SEED);
+        client.readRandomMatrix(k, m);
+        client.readCInputMatrix(k, m);
     }
 }
