@@ -1,6 +1,11 @@
 #include "client.h"
 
-Client::Client(string ip, int port, int seed) {
+
+Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
+    // server ip and port
+    server_ip = s_ip;
+    server_port = s_port;
+    
     // initialize the communication channel
     comm = new Channel(ip, port, seed);
 
@@ -50,6 +55,7 @@ Client::~Client() {
     delete mme;
 }
 
+
 void Client::readRandomMatrix(int row, int col) {
     // filename of matrix
     string filename = "../data/input/matrix_random_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
@@ -60,6 +66,7 @@ void Client::readRandomMatrix(int row, int col) {
     OK_PRINT("Finish reading random matrix: %s, size: %d x %d.", filename.c_str(), random_matrix.size(), random_matrix[0].size());
 }
 
+
 void Client::readCInputMatrix(int row, int col) {
     // filename of matrix
     string filename = "../data/input/matrix_client_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
@@ -68,4 +75,25 @@ void Client::readCInputMatrix(int row, int col) {
     // get the matrix
     cinput_matrix = mme->readMatrix(filename, row, col);
     OK_PRINT("Finish reading random matrix: %s, size: %d x %d.", filename.c_str(), cinput_matrix.size(), cinput_matrix[0].size());
+}
+
+
+void Client::sendHEParams() {
+    stringstream ss_params, ss_pub_key, ss_relin_keys, ss_galois_keys;
+
+    // serialize the params of HE
+    INFO_PRINT("Client is parsing the parameters of HE");
+    params->save(ss_params);
+    public_key.save(ss_pub_key);
+    relin_keys.save(ss_relin_keys);
+    galois_keys.save(ss_galois_keys);
+
+    // send it to server
+    string msg_he_params = ss_params.str() + "[@]" + \
+                            ss_pub_key.str() + "[@]" + \
+                            ss_relin_keys.str() + "[@]" + \
+                            ss_galois_keys.str();
+    comm->send(msg_he_params, server_ip, server_port);
+
+    OK_PRINT("Client's sending is not finished");
 }

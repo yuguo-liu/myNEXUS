@@ -18,10 +18,13 @@ using namespace seal;
 using namespace seal::util;
 using namespace std::chrono;
 
+
 class Client {
 private:
     // params for communication
-    Channel* comm;
+    Channel* comm;                      // client's communication
+    string server_ip;                   // ip of server
+    int server_port;                    // port of server
 
     // params for HE
     EncryptionParameters* params;       // the params of HE
@@ -49,11 +52,13 @@ private:
 
 public:
     // initial the client
-    Client(string ip, int port, int seed);
+    Client(string ip, int port, int seed, string s_ip, int s_port);
     // clean up when client is deleted
     ~Client();
     // load the random matrix
     void readRandomMatrix(int row, int col);
     // load the input matrix of client
     void readCInputMatrix(int row, int col);
+    // send HE params to server
+    void sendHEParams();
 };
