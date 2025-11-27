@@ -71,6 +71,7 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/src/server.cpp
     ${CMAKE_SOURCE_DIR}/src/client.cpp
     ${CMAKE_SOURCE_DIR}/src/pretty_print.cpp
+    ${CMAKE_SOURCE_DIR}/src/utils.cpp
     ${COMMON_SOURCE_FILES}
     ${BOOTSTRAPPING_SOURCE_FILES}
 )

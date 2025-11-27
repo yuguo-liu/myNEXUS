@@ -12,6 +12,7 @@
 #include "matrix_mul_opt.h"
 #include "channel.h"
 #include "pretty_print.h"
+#include "utils.h"
 
 using namespace std;
 using namespace seal;
@@ -29,15 +30,12 @@ private:
     // params for HE
     EncryptionParameters* params;       // the params of HE
     SEALContext* context;               // the context of HE
-    KeyGenerator* keygen;               // the key generator of HE
-    SecretKey secret_key;               // the secret key of HE (only held by client)
-    PublicKey public_key;               // the public key of HE (held both sides)
-    RelinKeys relin_keys;               // the relinearization key of HE (for bootstrapping)
-    GaloisKeys galois_keys;             // the galois key of HE (for ciphertext rotation)
+    PublicKey* public_key;              // the public key of HE (held both sides)
+    RelinKeys* relin_keys;              // the relinearization key of HE (for bootstrapping)
+    GaloisKeys* galois_keys;            // the galois key of HE (for ciphertext rotation)
     Encryptor* encryptor;               // the encryptor of HE
     CKKSEncoder* encoder;               // the encoder of HE
     Evaluator* evaluator;               // the evaluator of HE
-    Decryptor* decryptor;               // the decryptor of HE
     CKKSEvaluator* ckks_evaluator;      /* the ckks evaluator assembling context, encryptor, decryptor, 
                                                encoder, evaluator, SCALE, relin_keys, galois_keys */
     MMEvaluatorOpt* mme;                // the evaluator for matrix-matrix multiplication
@@ -46,8 +44,10 @@ private:
     vector<vector<double>> sinput_matrix;       // the matrix of private input
 
     // some constants
-    vector<int> MM_COEFF_MODULI = {60, 40, 60};
     double SCALE = pow(2.0, 40);
+
+    // mark of whether recv HE
+    bool is_recv_HE = false;
 
 public:
     // initial the server

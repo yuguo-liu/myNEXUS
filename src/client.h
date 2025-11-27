@@ -12,6 +12,7 @@
 #include "matrix_mul_opt.h"
 #include "channel.h"
 #include "pretty_print.h"
+#include "utils.h"
 
 using namespace std;
 using namespace seal;
@@ -49,6 +50,7 @@ private:
     // some constants
     vector<int> MM_COEFF_MODULI = {60, 40, 60};
     double SCALE = pow(2.0, 40);
+    size_t poly_modulus_degree;
 
 public:
     // initial the client

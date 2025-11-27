@@ -1,25 +1,103 @@
 #include "server.h"
 
 Server::Server(string ip, int port, int seed, string c_ip, int c_port) {
+    INFO_PRINT("Initialize the server");
+    
     // client ip and port
     client_ip = c_ip;
     client_port = c_port;
 
     // initialize the communication channel
     comm = new Channel(ip, port, seed);
+
+    OK_PRINT("Initialization finished");
 }
 
 
 Server::~Server() {
-
+    if (is_recv_HE) {
+        delete comm;
+        delete params;
+        delete context;
+        delete encryptor;
+        delete encoder;
+        delete evaluator;
+        delete ckks_evaluator;
+        delete mme;
+    } else {
+        delete comm;
+    }
 }
 
 
 void Server::readSInputMatrix(int row, int col) {
+    if (!is_recv_HE) {
+        ERR_PRINT("HE params have not been received, abort");
+        exit(-1);
+    }
+    // filename of matrix
+    string filename = "./data/input/matrix_server_input_m_" + to_string(row) + "_n_" + to_string(col) + ".mtx";
+    INFO_PRINT("Reading random matrix: %s", filename.c_str());
 
+    // get the matrix
+    sinput_matrix = mme->readMatrix(filename, row, col);
+    OK_PRINT("Finish reading random matrix: %s, size: %d x %d.", filename.c_str(), sinput_matrix.size(), sinput_matrix[0].size());
 }
 
 
 void Server::recvHEParams() {
+    INFO_PRINT("Server is receiving HE parameters");
 
+    // recv the HE params string
+    string msg_he_params, recv_ip;
+    int recv_port;
+    if (!comm->recv(msg_he_params, recv_ip, recv_port)) {
+        ERR_PRINT("Communication is failed");
+        exit(-1);
+    }
+
+    INFO_PRINT("Server received HE parameter string");
+
+    // parse string to params
+    vector<string> parsed_he_params = split(msg_he_params, "[@]");
+    stringstream ss_params(parsed_he_params[0]), ss_pub_key(parsed_he_params[1]), ss_relin_keys(parsed_he_params[2]), ss_galois_keys(parsed_he_params[3]);
+
+    // initialize the params
+    // params of HE
+    params = new EncryptionParameters(scheme_type::ckks);
+    params->load(ss_params);
+
+    // context of HE
+    context = new SEALContext(*params, true, sec_level_type::none);
+
+    // public key of HE
+    public_key = new PublicKey();
+    public_key->load(*context, ss_pub_key);
+
+    // relineration keys of HE
+    relin_keys = new RelinKeys();
+    relin_keys->load(*context, ss_relin_keys);
+
+    // galois keys of HE
+    galois_keys = new GaloisKeys();
+    galois_keys->load(*context, ss_galois_keys);
+
+    // encryptor, encoder and evaluator of HE
+    encryptor = new Encryptor(*context, *public_key);
+    encoder = new CKKSEncoder(*context);
+    evaluator = new Evaluator(*context, *encoder);
+
+    // ckks evaluator
+    // note: decryptor is not identical to the Client, just for parameter input
+    KeyGenerator keygen(*context);
+    SecretKey secret_key = keygen.secret_key();
+    Decryptor decryptor(*context, secret_key);
+
+    ckks_evaluator = new CKKSEvaluator(*context, *encryptor, decryptor, *encoder, *evaluator, SCALE, *relin_keys, *galois_keys);
+
+    // matrix-matrix evaluator
+    mme = new MMEvaluatorOpt(*ckks_evaluator);
+
+    is_recv_HE = true;
+    OK_PRINT("Server's receiving HE is finished");
 }

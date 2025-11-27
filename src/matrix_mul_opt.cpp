@@ -1,5 +1,6 @@
 #include "NumCpp.hpp"
 #include "matrix_mul_opt.h"
+#include "pretty_print.h"
 
 #include <fstream>
 #include <iostream>
@@ -13,6 +14,7 @@ using namespace std;
 using namespace seal;
 using namespace std::chrono;
 using namespace seal::util;
+
 
 std::vector<std::vector<double>> MMEvaluatorOpt::transposeMatrix(const std::vector<std::vector<double>> &matrix) {
     if (matrix.empty()) {
@@ -31,13 +33,14 @@ std::vector<std::vector<double>> MMEvaluatorOpt::transposeMatrix(const std::vect
     return transposedMatrix;
 }
 
+
 std::vector<std::vector<double>> MMEvaluatorOpt::readMatrix(const std::string &filename, int rows, int cols) {
     std::vector<std::vector<double>> matrix(rows, std::vector<double>(cols));
     std::ifstream file(filename);
 
     if (!file.is_open()) {
-        std::cerr << "Can not open file: " << filename << std::endl;
-        return matrix;
+        ERR_PRINT("Can not open file: %s", filename.c_str());
+        exit(-1);
     }
 
     std::string line;
@@ -46,7 +49,7 @@ std::vector<std::vector<double>> MMEvaluatorOpt::readMatrix(const std::string &f
             std::istringstream iss(line);
             for (int j = 0; j < cols; ++j) {
                 if (!(iss >> matrix[i][j])) {
-                    std::cerr << "read error: " << filename << " (row: " << i << ", column: " << j << ")" << std::endl;
+                    ERR_PRINT("read error: : %s (row: %d, column: %d)", filename.c_str(), i, j);
                 }
             }
         }
@@ -55,6 +58,7 @@ std::vector<std::vector<double>> MMEvaluatorOpt::readMatrix(const std::string &f
     file.close();
     return matrix;
 }
+
 
 void MMEvaluatorOpt::enc_compress_ciphertext(vector<double> &val, Ciphertext &ct) {
     Plaintext zero_pt;
@@ -100,6 +104,7 @@ void MMEvaluatorOpt::enc_compress_ciphertext(vector<double> &val, Ciphertext &ct
     ckks->evaluator->add_plain(zero, p, ct);
 }
 
+
 vector<Ciphertext> MMEvaluatorOpt::expand_ciphertext(const Ciphertext &encrypted, uint32_t m, GaloisKeys &galkey, vector<uint32_t> &galois_elts) {
     uint32_t logm = ceil(log2(m));
     auto n = ckks->N;
@@ -129,6 +134,7 @@ vector<Ciphertext> MMEvaluatorOpt::expand_ciphertext(const Ciphertext &encrypted
     }
     return temp;
 }
+
 
 void MMEvaluatorOpt::multiply_power_of_x(Ciphertext &encrypted, Ciphertext &destination, int index) {
     // Method 1:
@@ -172,6 +178,18 @@ void MMEvaluatorOpt::multiply_power_of_x(Ciphertext &encrypted, Ciphertext &dest
     ckks->evaluator->transform_to_ntt_inplace(encrypted);
     ckks->evaluator->transform_to_ntt_inplace(destination);
 }
+
+
+void MMEvaluatorOpt::matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext> &res) {
+    // 
+}
+
+
+void MMEvaluatorOpt::matrix_encode(vector<vector<double>> &x, vector<Plaintext> &res) {
+    vector<Plaintext> pts;
+
+}
+
 
 void MMEvaluatorOpt::matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res) {
     chrono::high_resolution_clock::time_point time_start, time_end;
@@ -247,6 +265,7 @@ void MMEvaluatorOpt::matrix_mul(vector<vector<double>> &x, vector<vector<double>
     cout << "Result calculation time: " << duration_cast<seconds>(time_end - time_start).count() << " seconds" << endl;
 }
 
+
 void MMEvaluatorOpt::matrix_mul_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res) {
     nc::NdArray<double> x_nd(x);
     nc::NdArray<double> y_nd(y);
@@ -265,6 +284,7 @@ void MMEvaluatorOpt::matrix_mul_in_plain(vector<vector<double>> &x, vector<vecto
     }
 }
 
+
 void MMEvaluatorOpt::matrix_add_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res) {
     nc::NdArray<double> x_nd(x);
     nc::NdArray<double> y_nd(y);
@@ -282,6 +302,7 @@ void MMEvaluatorOpt::matrix_add_in_plain(vector<vector<double>> &x, vector<vecto
         res.push_back(row);
     }
 }
+
 
 void MMEvaluatorOpt::matrix_sub_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res) {
     nc::NdArray<double> x_nd(x);

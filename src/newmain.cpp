@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
     int k, m, n, party, my_port, other_port;            // matrix #1 (k x m), matrix #2 (m x n)
     string my_ip, other_ip;
     if (argc < 9) {
-        cerr << "[Err] Invalid input\n Valid input should be ./newmain <k> <m> <n> <party> <ip> <port> <t_ip> <t_port>" << endl;
+        cerr << "[Err] Invalid input\n Valid input should be ./newmain <k> <m> <n> <party> <ip> <port> <t_ip> <t_port>, abort" << endl;
         exit(-1);
     }
 
@@ -26,13 +26,15 @@ int main(int argc, char** argv) {
     
     if (party == 0) {
         Client client(my_ip, my_port, SEED_CLIENT, other_ip, other_port);
+        client.sendHEParams();
         client.readRandomMatrix(k, m);
         client.readCInputMatrix(k, m);
-        client.sendHEParams();
     } else if (party == 1) {
-
+        Server server(my_ip, my_port, SEED_SERVER, other_ip, other_port);
+        server.recvHEParams();
+        server.readSInputMatrix(m, n);
     } else {
-        ERR_PRINT("Parameter of <party> is invalid, should be 0 (client) / 1 (server)");
+        ERR_PRINT("Parameter of <party> is invalid, should be 0 (client) / 1 (server), abort");
         exit(-1);
     }
 }

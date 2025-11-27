@@ -2,6 +2,8 @@
 
 
 Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
+    INFO_PRINT("Initialize the client");
+
     // server ip and port
     server_ip = s_ip;
     server_port = s_port;
@@ -11,14 +13,17 @@ Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
 
     // initialize the HE params and evaluator
     long logN = 13;
-    size_t poly_modulus_degree = 1 << logN;
+    poly_modulus_degree = 1 << logN;
 
+    // params of HE
     params = new EncryptionParameters(scheme_type::ckks);
     params->set_poly_modulus_degree(poly_modulus_degree);
     params->set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, MM_COEFF_MODULI));
 
+    // context of HE
     context = new SEALContext(*params, true, sec_level_type::none);
 
+    // secret key, relineration keys and public key of HE
     keygen = new KeyGenerator(*context);
     secret_key = keygen->secret_key();
     keygen->create_public_key(public_key);
@@ -30,15 +35,19 @@ Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
     }
     keygen->create_galois_keys(rots, galois_keys);
 
+    // encryptor, encoder, evaluator and decryptor of HE
     encryptor = new Encryptor(*context, public_key);
     encoder = new CKKSEncoder(*context);
     evaluator = new Evaluator(*context, *encoder);
     decryptor = new Decryptor(*context, secret_key);
 
+    // ckks evaluator
     ckks_evaluator = new CKKSEvaluator(*context, *encryptor, *decryptor, *encoder, *evaluator, SCALE, relin_keys, galois_keys);
+    
+    // matrix-matrix evaluator
     mme = new MMEvaluatorOpt(*ckks_evaluator);
 
-    OK_PRINT("Initialization finished.");
+    OK_PRINT("Initialization finished");
 }
 
 
@@ -58,7 +67,7 @@ Client::~Client() {
 
 void Client::readRandomMatrix(int row, int col) {
     // filename of matrix
-    string filename = "../data/input/matrix_random_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
+    string filename = "./data/input/matrix_random_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
     INFO_PRINT("Reading random matrix: %s", filename.c_str());
 
     // get the matrix
@@ -69,7 +78,7 @@ void Client::readRandomMatrix(int row, int col) {
 
 void Client::readCInputMatrix(int row, int col) {
     // filename of matrix
-    string filename = "../data/input/matrix_client_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
+    string filename = "./data/input/matrix_client_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
     INFO_PRINT("Reading random matrix: %s", filename.c_str());
 
     // get the matrix
@@ -95,5 +104,5 @@ void Client::sendHEParams() {
                             ss_galois_keys.str();
     comm->send(msg_he_params, server_ip, server_port);
 
-    OK_PRINT("Client's sending is not finished");
+    OK_PRINT("Client's sending HE is finished");
 }

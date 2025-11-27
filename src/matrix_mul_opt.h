@@ -19,6 +19,8 @@ public:
     }
 
     void matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res);
+    void matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext> &res);
+    void matrix_encode(vector<vector<double>> &x, vector<Plaintext> &res);
 
     void matrix_mul_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res);
     void matrix_add_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res);
