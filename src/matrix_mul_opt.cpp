@@ -181,13 +181,40 @@ void MMEvaluatorOpt::multiply_power_of_x(Ciphertext &encrypted, Ciphertext &dest
 
 
 void MMEvaluatorOpt::matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext> &res) {
-    // 
+    // tight packing of encoding
+    vector<vector<double>> row_pack;
+    vector<double> row_ct(poly_modulus_degree, 0.0);
+    size_t rows = x.size();
+    size_t cols = x[0].size();
+    for (int i = 0; i < rows * cols; i++) {
+        int row = i / rows;
+        int col = i % rows;
+        row_ct[i % poly_modulus_degree] = x[row][col];
+        if (i % poly_modulus_degree == (poly_modulus_degree - 1)) {
+            row_pack.push_back(row_ct);
+        }
+    }
+
+    // encrypt the matrix
+    for (int i = 0; i < rows * cols / ckks->degree; i++) {
+        Ciphertext ct;
+        enc_compress_ciphertext(row_pack[i], ct);
+        res.push_back(ct);
+    }
 }
 
 
 void MMEvaluatorOpt::matrix_encode(vector<vector<double>> &x, vector<Plaintext> &res) {
-    vector<Plaintext> pts;
-
+    // get rows and cols
+    int rows = x.size();
+    int cols = x[0].size();
+    
+    res.reserve(rows);
+    for (int i = 0; i < rows; i++) {
+        Plaintext pt;
+        ckks->encoder->encode(x[i], ckks->scale, pt);
+        res.emplace_back(pt);
+    }
 }
 
 

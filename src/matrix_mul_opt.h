@@ -8,14 +8,16 @@
 class MMEvaluatorOpt {
 private:
     CKKSEvaluator *ckks = nullptr;
+    size_t poly_modulus_degree;
 
     void enc_compress_ciphertext(vector<double> &vec, Ciphertext &ct);
     void multiply_power_of_x(Ciphertext &encrypted, Ciphertext &destination, int index);
     vector<Ciphertext> expand_ciphertext(const Ciphertext &encrypted, uint32_t m, GaloisKeys &galkey, vector<uint32_t> &galois_elts);
 
 public:
-    MMEvaluatorOpt(CKKSEvaluator &ckks) {
+    MMEvaluatorOpt(CKKSEvaluator &ckks, size_t poly_modulus_degree) {
         this->ckks = &ckks;
+        this->poly_modulus_degree = poly_modulus_degree;
     }
 
     void matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res);
