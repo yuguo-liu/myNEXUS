@@ -67,4 +67,8 @@ public:
     void sendHECipher(vector<Ciphertext> &ciphers);
     // recv HE cipher from server
     void recvHECipher(vector<Ciphertext> &recv_ciphers);
+    // offline phase of multiplication
+    void multiplication_offline();
+    // online phase of multiplication
+    void multiplication_online();
 };

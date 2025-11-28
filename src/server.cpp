@@ -157,3 +157,38 @@ void Server::recvHECipher(vector<Ciphertext> &recv_ciphers) {
     OK_PRINT("Receiving cipher is finished");
 }
 
+
+// note: The core of multiplication is B * [A], however, what we actually want to do is [A] * B.
+//       So, we do (B^T * [A^T])T = [A] * B, meaning that the all input should be transposed
+/**
+ * offline phase of matrix multiplication (+ means that server should do)
+ * - client sample a random matrix R
+ * - client encrypt R as [R]
+ * + client send matrix [R] to server
+ * + server compute [R] * S (S is private matrix held by server)
+ * + server return [R] * S back to client
+ * - client decrypt [R] * S as R * S
+ */
+void Server::multiplication_offline() {
+    // offline phase of multiplication
+    INFO_PRINT("Performing offline phase of matrix multiplication");
+
+    // 1 - receive matrix [R] from server
+    vector<Ciphertext> ciphers_R_T;
+    recvHECipher(ciphers_R_T);
+
+    // 2 - compute [R] * S
+    vector<vector<double>> S_T = mme->transposeMatrix(sinput_matrix);
+}
+
+/**
+ * online phase of matrix multiplication
+ * - client compute C - R
+ * + client send C - R to server
+ * + server evaluate (C - R) * S
+ * + server return (C - R) * S back to client
+ * - client compute (C - R) * S + R * S
+ */
+void Server::multiplication_online() {
+
+}
