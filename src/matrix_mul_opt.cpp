@@ -181,11 +181,13 @@ void MMEvaluatorOpt::multiply_power_of_x(Ciphertext &encrypted, Ciphertext &dest
 
 
 void MMEvaluatorOpt::matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext> &res) {
+    size_t rows = x.size();
+    size_t cols = x[0].size();
+    
+    INFO_PRINT("Encrypting matrix of size %d x %d", rows, cols);
     // tight packing of encoding
     vector<vector<double>> row_pack;
     vector<double> row_ct(poly_modulus_degree, 0.0);
-    size_t rows = x.size();
-    size_t cols = x[0].size();
     for (int i = 0; i < rows * cols; i++) {
         int row = i / rows;
         int col = i % rows;
@@ -201,6 +203,8 @@ void MMEvaluatorOpt::matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext
         enc_compress_ciphertext(row_pack[i], ct);
         res.push_back(ct);
     }
+
+    OK_PRINT("Encryption of matrix is finished.");
 }
 
 
@@ -208,17 +212,70 @@ void MMEvaluatorOpt::matrix_encode(vector<vector<double>> &x, vector<Plaintext> 
     // get rows and cols
     int rows = x.size();
     int cols = x[0].size();
+
+    INFO_PRINT("Encoding matrix of size %d x %d", rows, cols);
     
+    // encode to plaintext
     res.reserve(rows);
     for (int i = 0; i < rows; i++) {
         Plaintext pt;
         ckks->encoder->encode(x[i], ckks->scale, pt);
         res.emplace_back(pt);
     }
+
+    OK_PRINT("Encoding is finished");
 }
 
 
-void MMEvaluatorOpt::matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res) {
+void MMEvaluatorOpt::matrix_cp_mul(vector<Plaintext> &p_a, vector<Ciphertext> &c_b, int cols_b, vector<Ciphertext> &c_res) {
+    INFO_PRINT("Multiplicating ciphertext-plaintext matrice");
+    
+    // get the number of rows
+    int rows = c_b.size();
+
+    // expand encrypted matrix
+    vector<Ciphertext> c_b_expanded;
+
+    INFO_PRINT("Expanding the cipher matrix (expand to SIMD encoding)");
+
+    for (int i = 0; i < c_b.size(); i++) {
+        vector<Ciphertext> tmp_cts = expand_ciphertext(c_b[i], ckks->degree, *ckks->galois_keys, ckks->rots);
+        INFO_PRINT("Expanded ciphertext # %d", i + 1);
+        c_b_expanded.insert(c_b_expanded.end(), make_move_iterator(tmp_cts.begin()), make_move_iterator(tmp_cts.end()));
+    }
+
+    OK_PRINT("Expansion is finished");
+
+    // do the multiplication
+    INFO_PRINT("Multiplicating the plaintext and expanded ciphertext");
+
+    Ciphertext temp;
+    for (int i = 0; i < rows; i++) {
+        Ciphertext res_col_ct;
+        vector<Ciphertext> tmp_cts(cols_b);
+
+        for (int j = 0; j < cols_b; j++) {
+            ckks->evaluator->multiply_plain(c_b_expanded[i * cols_b + j], p_a[j], tmp_cts[j]);
+        }
+
+        res_col_ct.scale() = tmp_cts[0].scale();
+        ckks->evaluator->add_many(tmp_cts, res_col_ct);
+        
+        res_col_ct.scale() *= 4096;
+        c_res.push_back(res_col_ct);
+    }
+
+    for (auto &ct : c_res) {
+        while (ct.coeff_modulus_size() > 1) {
+            ckks->evaluator->rescale_to_next_inplace(ct);
+        }
+    }
+
+    OK_PRINT("Multiplication is finished");
+}
+
+
+void MMEvaluatorOpt::legacy_matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res) {
     chrono::high_resolution_clock::time_point time_start, time_end;
 
     vector<Plaintext> a_pts;

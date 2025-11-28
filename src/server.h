@@ -25,7 +25,7 @@ private:
     // params for communication
     Channel* comm;
     string client_ip;
-    string client_port;
+    int client_port;
 
     // params for HE
     EncryptionParameters* params;       // the params of HE
@@ -58,4 +58,9 @@ public:
     void readSInputMatrix(int row, int col);
     // recv HE params from client
     void recvHEParams();
+    // send HE cipher to client
+    void sendHECipher(vector<Ciphertext> &ciphers);
+    // recv HE cipher from client
+    void recvHECipher(vector<Ciphertext> &recv_ciphers);
+    // multiplication
 };

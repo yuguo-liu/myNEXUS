@@ -63,4 +63,8 @@ public:
     void readCInputMatrix(int row, int col);
     // send HE params to server
     void sendHEParams();
+    // send HE cipher to server
+    void sendHECipher(vector<Ciphertext> &ciphers);
+    // recv HE cipher from server
+    void recvHECipher(vector<Ciphertext> &recv_ciphers);
 };

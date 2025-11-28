@@ -20,9 +20,11 @@ public:
         this->poly_modulus_degree = poly_modulus_degree;
     }
 
-    void matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res);
+    
     void matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext> &res);
     void matrix_encode(vector<vector<double>> &x, vector<Plaintext> &res);
+
+    void matrix_cp_mul(vector<Plaintext> &p_a, vector<Ciphertext> &c_b, int cols_b, vector<Ciphertext> &c_res);
 
     void matrix_mul_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res);
     void matrix_add_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res);
@@ -30,4 +32,7 @@ public:
 
     std::vector<std::vector<double>> readMatrix(const std::string &filename, int rows, int cols);
     std::vector<std::vector<double>> transposeMatrix(const std::vector<std::vector<double>> &matrix);
+
+    // lagacy code
+    void legacy_matrix_mul(vector<vector<double>> &x, vector<vector<double>> &y, vector<Ciphertext> &res);
 };

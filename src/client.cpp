@@ -45,7 +45,7 @@ Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
     ckks_evaluator = new CKKSEvaluator(*context, *encryptor, *decryptor, *encoder, *evaluator, SCALE, relin_keys, galois_keys);
     
     // matrix-matrix evaluator
-    mme = new MMEvaluatorOpt(*ckks_evaluator);
+    mme = new MMEvaluatorOpt(*ckks_evaluator, poly_modulus_degree);
 
     OK_PRINT("Initialization finished");
 }
@@ -101,8 +101,64 @@ void Client::sendHEParams() {
     string msg_he_params = ss_params.str() + "[@]" + \
                             ss_pub_key.str() + "[@]" + \
                             ss_relin_keys.str() + "[@]" + \
-                            ss_galois_keys.str();
+                            ss_galois_keys.str() + "[@]" + \
+                            to_string(poly_modulus_degree);
     comm->send(msg_he_params, server_ip, server_port);
 
-    OK_PRINT("Client's sending HE is finished");
+    OK_PRINT("Sending HE params is finished");
 }
+
+
+void Client::sendHECipher(vector<Ciphertext> &ciphers) {
+    string s_ciphers = "";
+    auto size = 0;
+    int ciphers_len = ciphers.size();
+
+    INFO_PRINT("Sending cipher of HE to server");
+
+    // convert ciphertext to stringstream
+    for (int i = 0; i < ciphers_len; i++) {
+        stringstream ss_cipher;
+        size += ciphers[i].save(ss_cipher);
+        
+        if (i < ciphers_len - 1) {
+            s_ciphers += ss_cipher.str() + "[@]";
+        } else {
+            s_ciphers += ss_cipher.str();
+        }
+    }
+
+    // send string to server
+    INFO_PRINT("Ready to send HE cipher with %f MB", size / 1024.0 / 1024.0);
+    comm->send(s_ciphers, server_ip, server_port);
+
+    OK_PRINT("Sending cipher of HE is finished");
+}
+
+
+void Client::recvHECipher(vector<Ciphertext> &recv_ciphers) {
+    INFO_PRINT("Receiving cipher from server");
+
+    // receive HE string from server
+    string s_ciphers, s_ip;
+    int s_port;
+    
+    if (!comm->recv(s_ciphers, s_ip, s_port)) {
+        ERR_PRINT("Communication is failed");
+        exit(-1);
+    }
+
+    // parse the string to ciphertexts
+    vector<string> s_ciphers_vec = split(s_ciphers, "[@]");
+
+    for (string s : s_ciphers_vec) {
+        stringstream ss(s);
+        Ciphertext single_cipher;
+
+        single_cipher.load(*context, ss);
+        recv_ciphers.push_back(single_cipher);
+    }
+
+    OK_PRINT("Receiving cipher is finished");
+}
+
