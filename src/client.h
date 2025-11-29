@@ -13,6 +13,7 @@
 #include "channel.h"
 #include "pretty_print.h"
 #include "utils.h"
+#include "matrix_info.h"
 
 using namespace std;
 using namespace seal;
@@ -46,6 +47,13 @@ private:
     // matrix
     vector<vector<double>> random_matrix;       // the matrix to mask the `client matrix`
     vector<vector<double>> cinput_matrix;       // the matrix of private input
+    
+    vector<vector<double>> interval_matrix;     // the matrix intervally generated to help matrix multiplication
+
+    vector<vector<double>> result_matrix;       // the result matrix of multiplication
+
+    // matrix info
+    vector<MatrixInfo> matrix_info_vec;         // the vector of matrix information
 
     // some constants
     vector<int> MM_COEFF_MODULI = {60, 40, 60};
@@ -54,13 +62,13 @@ private:
 
 public:
     // initial the client
-    Client(string ip, int port, int seed, string s_ip, int s_port);
+    Client(string ip, int port, int seed, string s_ip, int s_port, vector<MatrixInfo> &matrix_infos);
     // clean up when client is deleted
     ~Client();
     // load the random matrix
-    void readRandomMatrix(int row, int col);
+    void readRandomMatrix(int idx);
     // load the input matrix of client
-    void readCInputMatrix(int row, int col);
+    void readCInputMatrix(int idx);
     // send HE params to server
     void sendHEParams();
     // send HE cipher to server
@@ -68,7 +76,9 @@ public:
     // recv HE cipher from server
     void recvHECipher(vector<Ciphertext> &recv_ciphers);
     // offline phase of multiplication
-    void multiplication_offline();
+    void multiplication_offline(int idx);
     // online phase of multiplication
-    void multiplication_online();
+    void multiplication_online(int idx);
+    // clear matrix
+    void clear_matrix();
 };

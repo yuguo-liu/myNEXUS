@@ -1,7 +1,7 @@
 #include "client.h"
 
 
-Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
+Client::Client(string ip, int port, int seed, string s_ip, int s_port, vector<MatrixInfo> &matrix_infos) {
     INFO_PRINT("Initialize the client");
 
     // server ip and port
@@ -10,6 +10,11 @@ Client::Client(string ip, int port, int seed, string s_ip, int s_port) {
     
     // initialize the communication channel
     comm = new Channel(ip, port, seed);
+
+    // load in the matrix info
+    for (MatrixInfo matrix_info : matrix_infos) {
+        matrix_info_vec.push_back(matrix_info);
+    }
 
     // initialize the HE params and evaluator
     long logN = 13;
@@ -65,7 +70,13 @@ Client::~Client() {
 }
 
 
-void Client::readRandomMatrix(int row, int col) {
+void Client::readRandomMatrix(int idx) {
+    // get matrix info
+    MatrixInfo reading_matrix_info = matrix_info_vec[idx];
+    int row, col;
+    row = reading_matrix_info.first_row;
+    col = reading_matrix_info.first_col;
+
     // filename of matrix
     string filename = "./data/input/matrix_random_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
     INFO_PRINT("Reading random matrix: %s", filename.c_str());
@@ -76,7 +87,13 @@ void Client::readRandomMatrix(int row, int col) {
 }
 
 
-void Client::readCInputMatrix(int row, int col) {
+void Client::readCInputMatrix(int idx) {
+    // get matrix info
+    MatrixInfo reading_matrix_info = matrix_info_vec[idx];
+    int row, col;
+    row = reading_matrix_info.first_row;
+    col = reading_matrix_info.first_col;
+
     // filename of matrix
     string filename = "./data/input/matrix_client_input_k_" + to_string(row) + "_m_" + to_string(col) + ".mtx";
     INFO_PRINT("Reading random matrix: %s", filename.c_str());
@@ -98,10 +115,10 @@ void Client::sendHEParams() {
     galois_keys.save(ss_galois_keys);
 
     // send it to server
-    string msg_he_params = ss_params.str() + "[@]" + \
-                            ss_pub_key.str() + "[@]" + \
-                            ss_relin_keys.str() + "[@]" + \
-                            ss_galois_keys.str() + "[@]" + \
+    string msg_he_params = ss_params.str() + "[@@@]" + \
+                            ss_pub_key.str() + "[@@@]" + \
+                            ss_relin_keys.str() + "[@@@]" + \
+                            ss_galois_keys.str() + "[@@@]" + \
                             to_string(poly_modulus_degree);
     comm->send(msg_he_params, server_ip, server_port);
 
@@ -116,13 +133,26 @@ void Client::sendHECipher(vector<Ciphertext> &ciphers) {
 
     INFO_PRINT("Sending cipher of HE to server");
 
+    // p.s. client should know server is ready
+    string ready_msg, s_ip;
+    int s_port;
+    if (!comm->recv(ready_msg, s_ip, s_port)) {
+        ERR_PRINT("Communication is failed");
+        exit(-1);
+    }
+
+    if (ready_msg != "ready-recv-he") {
+        ERR_PRINT("Invalid label, abort");
+        exit(-1);
+    }
+
     // convert ciphertext to stringstream
     for (int i = 0; i < ciphers_len; i++) {
         stringstream ss_cipher;
         size += ciphers[i].save(ss_cipher);
         
         if (i < ciphers_len - 1) {
-            s_ciphers += ss_cipher.str() + "[@]";
+            s_ciphers += ss_cipher.str() + "[@@@]";
         } else {
             s_ciphers += ss_cipher.str();
         }
@@ -130,6 +160,7 @@ void Client::sendHECipher(vector<Ciphertext> &ciphers) {
 
     // send string to server
     INFO_PRINT("Ready to send HE cipher with %f MB", size / 1024.0 / 1024.0);
+    // cout << s_ciphers << endl;
     comm->send(s_ciphers, server_ip, server_port);
 
     OK_PRINT("Sending cipher of HE is finished");
@@ -143,13 +174,16 @@ void Client::recvHECipher(vector<Ciphertext> &recv_ciphers) {
     string s_ciphers, s_ip;
     int s_port;
     
+    // p.s. server should let client know server is ready
+    comm->send("ready-recv-he", server_ip, server_port);
+
     if (!comm->recv(s_ciphers, s_ip, s_port)) {
         ERR_PRINT("Communication is failed");
         exit(-1);
     }
 
     // parse the string to ciphertexts
-    vector<string> s_ciphers_vec = split(s_ciphers, "[@]");
+    vector<string> s_ciphers_vec = split(s_ciphers, "[@@@]");
 
     for (string s : s_ciphers_vec) {
         stringstream ss(s);
@@ -174,7 +208,7 @@ void Client::recvHECipher(vector<Ciphertext> &recv_ciphers) {
  * + server return [R] * S back to client
  * + client decrypt [R] * S as R * S
  */
-void Client::multiplication_offline() {
+void Client::multiplication_offline(int idx) {
     // offline phase of multiplication
     INFO_PRINT("Performing offline phase of matrix multiplication");
 
@@ -182,14 +216,24 @@ void Client::multiplication_offline() {
     // note: read the random matrix from file, stored in random_matrix
     
     // 2 - encrypt R as [R]
-    vector<Ciphertext> ciphers_R_T;
-    vector<vector<double>> random_matrix_T = mme->transposeMatrix(random_matrix);
-    mme->matrix_encrypt(random_matrix_T, ciphers_R_T);
+    vector<Ciphertext> R_T_ct;
+    vector<vector<double>> R_T = mme->transposeMatrix(random_matrix);
+    mme->matrix_encrypt(R_T, R_T_ct);
 
     // 3 - send matrix [R] to server
-    sendHECipher(ciphers_R_T);
+    sendHECipher(R_T_ct);
 
-    // 4 - receive 
+    // 4 - receive [R] * S from server
+    vector<Ciphertext> R_S_T_ct;
+    recvHECipher(R_S_T_ct);
+
+    // 5 - decrypt [R] * S as R * S
+    vector<vector<double>> R_S_T;
+    mme->matrix_decrypt(R_S_T_ct, R_S_T);
+    // 5.1 - tranpose to get R * S
+    interval_matrix = mme->transposeMatrix(R_S_T);
+
+    OK_PRINT("Offline phase of matrix multiplication is finished");
 }
 
 /**
@@ -200,6 +244,36 @@ void Client::multiplication_offline() {
  * + server return (C - R) * S back to client
  * + client compute (C - R) * S + R * S
  */
-void Client::multiplication_online() {
+void Client::multiplication_online(int idx) {
+    INFO_PRINT("Performing online phase of matrix multiplication");
 
+    // 1 - compute C - R
+    vector<vector<double>> C_minus_R;
+    mme->matrix_sub_in_plain(cinput_matrix, random_matrix, C_minus_R);
+
+    // 2 - send C - R to server
+    string C_minus_R_str = matrix_to_string(C_minus_R);
+    comm->send(C_minus_R_str, server_ip, server_port);
+
+    // 3 - receive (C - R) * S from server
+    string C_minus_R_S_str, c_ip;
+    int c_port;
+    if (!comm->recv(C_minus_R_S_str, c_ip, c_port)) {
+        ERR_PRINT("Communication is failed");
+        exit(-1);
+    }
+
+    vector<vector<double>> C_minus_R_S = string_to_matrix(C_minus_R_S_str);
+
+    // 4 - compute (C - R) * S + R * S
+    mme->matrix_add_in_plain(C_minus_R_S, interval_matrix, result_matrix);
+}
+
+
+void Client::clear_matrix() {
+    for (vector<double> im : interval_matrix) im.clear();
+    interval_matrix.clear();
+    
+    for (vector<double> rm : result_matrix) rm.clear();
+    result_matrix.clear();
 }

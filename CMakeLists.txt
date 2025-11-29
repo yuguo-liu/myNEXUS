@@ -13,6 +13,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add dependencies
 find_package(SEAL 4.1 REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # Nexus
 add_subdirectory(src/bootstrapping/common)
@@ -81,6 +82,7 @@ target_include_directories(newmain PUBLIC
     /usr/local/include/NTL
     ${COMMON_HEADER_DIR}
     ${BOOTSTRAPPING_HEADER_DIR}
+    OpenSSL::Crypto
 )
 
-target_link_libraries(newmain PRIVATE ntl gmp m pthread SEAL::seal)
+target_link_libraries(newmain PRIVATE ntl gmp m pthread SEAL::seal OpenSSL::Crypto)

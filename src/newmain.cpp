@@ -23,16 +23,27 @@ int main(int argc, char** argv) {
     other_port = stoi(argv[8]);
 
     INFO_PRINT("Get the parameter from party %d: matrix #1 (%d x %d), matrix #2 (%d x %d)", party, k, m, m, n);    
-    
+    INFO_PRINT("my ip: %s:%d", my_ip.c_str(), my_port);
+
+    // generate matrix info
+    MatrixInfo matrix_info(0, k, m, n);
+
+    vector<MatrixInfo> matrix_info_vec;
+    matrix_info_vec.push_back(matrix_info);
+
     if (party == 0) {
-        Client client(my_ip, my_port, SEED_CLIENT, other_ip, other_port);
+        Client client(my_ip, my_port, SEED_CLIENT, other_ip, other_port, matrix_info_vec);
         client.sendHEParams();
-        client.readRandomMatrix(k, m);
-        client.readCInputMatrix(k, m);
+        client.readRandomMatrix(0);
+        client.readCInputMatrix(0);
+        client.multiplication_offline(0);
+        client.multiplication_online(0);
     } else if (party == 1) {
-        Server server(my_ip, my_port, SEED_SERVER, other_ip, other_port);
+        Server server(my_ip, my_port, SEED_SERVER, other_ip, other_port, matrix_info_vec);
         server.recvHEParams();
-        server.readSInputMatrix(m, n);
+        server.readSInputMatrix(0);
+        server.multiplication_offline(0);
+        server.multiplication_online(0);
     } else {
         ERR_PRINT("Parameter of <party> is invalid, should be 0 (client) / 1 (server), abort");
         exit(-1);

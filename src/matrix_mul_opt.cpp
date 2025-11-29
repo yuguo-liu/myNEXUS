@@ -185,12 +185,13 @@ void MMEvaluatorOpt::matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext
     size_t cols = x[0].size();
     
     INFO_PRINT("Encrypting matrix of size %d x %d", rows, cols);
+
     // tight packing of encoding
     vector<vector<double>> row_pack;
     vector<double> row_ct(poly_modulus_degree, 0.0);
     for (int i = 0; i < rows * cols; i++) {
-        int row = i / rows;
-        int col = i % rows;
+        int row = i / cols;
+        int col = i % cols;
         row_ct[i % poly_modulus_degree] = x[row][col];
         if (i % poly_modulus_degree == (poly_modulus_degree - 1)) {
             row_pack.push_back(row_ct);
@@ -224,6 +225,21 @@ void MMEvaluatorOpt::matrix_encode(vector<vector<double>> &x, vector<Plaintext> 
     }
 
     OK_PRINT("Encoding is finished");
+}
+
+
+void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<double>> &res) {
+    INFO_PRINT("Decrypting matrix");
+
+    // decrypt the matrix row by row
+    vector<vector<double>> rows;
+    for (Ciphertext row_ct : x_ct) {
+        vector<double> row;
+        Plaintext row_pt;
+        ckks->decryptor->decrypt(row_ct, row_pt);
+        ckks->encoder->decode(row_pt, row);
+        rows.push_back(row);
+    }
 }
 
 

@@ -13,6 +13,7 @@
 #include "channel.h"
 #include "pretty_print.h"
 #include "utils.h"
+#include "matrix_info.h"
 
 using namespace std;
 using namespace seal;
@@ -43,6 +44,9 @@ private:
     // matrix
     vector<vector<double>> sinput_matrix;       // the matrix of private input
 
+    // matrix info
+    vector<MatrixInfo> matrix_info_vec;         // the vector of matrix information
+
     // some constants
     double SCALE = pow(2.0, 40);
 
@@ -51,11 +55,11 @@ private:
 
 public:
     // initial the server
-    Server(string ip, int port, int seed, string c_ip, int c_port);
+    Server(string ip, int port, int seed, string c_ip, int c_port, vector<MatrixInfo> &matrix_infos);
     // clean up when server is deleted
     ~Server();
     // load the input matrix of server
-    void readSInputMatrix(int row, int col);
+    void readSInputMatrix(int idx);
     // recv HE params from client
     void recvHEParams();
     // send HE cipher to client
@@ -63,7 +67,7 @@ public:
     // recv HE cipher from client
     void recvHECipher(vector<Ciphertext> &recv_ciphers);
     // offline phase of multiplication
-    void multiplication_offline();
+    void multiplication_offline(int idx);
     // online phase of multiplication
-    void multiplication_online();
+    void multiplication_online(int idx);
 };
