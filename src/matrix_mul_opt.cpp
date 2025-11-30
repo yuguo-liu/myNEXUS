@@ -228,7 +228,7 @@ void MMEvaluatorOpt::matrix_encode(vector<vector<double>> &x, vector<Plaintext> 
 }
 
 
-void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<double>> &res) {
+void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<double>> &res, int res_rows, int res_cols) {
     INFO_PRINT("Decrypting matrix");
 
     // decrypt the matrix row by row
@@ -240,6 +240,9 @@ void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<doub
         ckks->encoder->decode(row_pt, row);
         rows.push_back(row);
     }
+
+    // reshape the matrix
+    
 }
 
 
@@ -386,6 +389,8 @@ void MMEvaluatorOpt::matrix_mul_in_plain(vector<vector<double>> &x, vector<vecto
 
 
 void MMEvaluatorOpt::matrix_add_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res) {
+    INFO_PRINT("Performing plaintext matrix addition");
+    
     nc::NdArray<double> x_nd(x);
     nc::NdArray<double> y_nd(y);
 
@@ -401,10 +406,14 @@ void MMEvaluatorOpt::matrix_add_in_plain(vector<vector<double>> &x, vector<vecto
         std::vector<double> row(res_one_row.begin() + i * cols, res_one_row.begin() + (i + 1) * cols);
         res.push_back(row);
     }
+
+    OK_PRINT("Plaintext matrix addition is finished");
 }
 
 
 void MMEvaluatorOpt::matrix_sub_in_plain(vector<vector<double>> &x, vector<vector<double>> &y, vector<vector<double>> &res) {
+    INFO_PRINT("Performing plaintext matrix substraction");
+    
     nc::NdArray<double> x_nd(x);
     nc::NdArray<double> y_nd(y);
 
@@ -420,4 +429,6 @@ void MMEvaluatorOpt::matrix_sub_in_plain(vector<vector<double>> &x, vector<vecto
         std::vector<double> row(res_one_row.begin() + i * cols, res_one_row.begin() + (i + 1) * cols);
         res.push_back(row);
     }
+
+    OK_PRINT("Plaintext matrix substraction is finished");
 }

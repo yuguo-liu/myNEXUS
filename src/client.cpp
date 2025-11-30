@@ -266,6 +266,8 @@ void Client::multiplication_online(int idx) {
     vector<vector<double>> C_minus_R_S = string_to_matrix(C_minus_R_S_str);
 
     // 4 - compute (C - R) * S + R * S
+    INFO_PRINT("C_minus_R_S:     %d x %d", C_minus_R_S.size(), C_minus_R[0].size());
+    INFO_PRINT("interval_matrix: %d x %d", interval_matrix.size(), interval_matrix[0].size());
     mme->matrix_add_in_plain(C_minus_R_S, interval_matrix, result_matrix);
 }
 

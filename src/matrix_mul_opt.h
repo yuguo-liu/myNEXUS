@@ -23,7 +23,7 @@ public:
     
     void matrix_encrypt(vector<vector<double>> &x, vector<Ciphertext> &res);
     void matrix_encode(vector<vector<double>> &x, vector<Plaintext> &res);
-    void matrix_decrypt(vector<Ciphertext> &x, vector<vector<double>> &res);
+    void matrix_decrypt(vector<Ciphertext> &x, vector<vector<double>> &res, int res_rows, int res_cols);
 
     void matrix_cp_mul(vector<Plaintext> &p_a, vector<Ciphertext> &c_b, int cols_b, vector<Ciphertext> &c_res);
 
