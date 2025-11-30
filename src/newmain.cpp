@@ -38,6 +38,8 @@ int main(int argc, char** argv) {
         client.readCInputMatrix(0);
         client.multiplication_offline(0);
         client.multiplication_online(0);
+        client.glanceResultMatrix(10, 10);
+        client.glanceIntervalMatrix(10, 10);
     } else if (party == 1) {
         Server server(my_ip, my_port, SEED_SERVER, other_ip, other_port, matrix_info_vec);
         server.recvHEParams();

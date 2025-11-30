@@ -81,4 +81,8 @@ public:
     void multiplication_online(int idx);
     // clear matrix
     void clear_matrix();
+    // print some elements in the result matrix
+    void glanceResultMatrix(int rows, int cols);
+    // print some elements in the interval matrix
+    void glanceIntervalMatrix(int rows, int cols);
 };

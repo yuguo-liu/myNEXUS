@@ -212,6 +212,11 @@ void Client::multiplication_offline(int idx) {
     // offline phase of multiplication
     INFO_PRINT("Performing offline phase of matrix multiplication");
 
+    // get matrix info
+    MatrixInfo m_info = matrix_info_vec[idx];
+    int res_row = m_info.first_row;
+    int res_col = m_info.second_col;
+
     // 1 - sample a random matrix R
     // note: read the random matrix from file, stored in random_matrix
     
@@ -228,7 +233,8 @@ void Client::multiplication_offline(int idx) {
     recvHECipher(R_S_T_ct);
 
     // 5 - decrypt [R] * S as R * S
-    vector<vector<double>> R_S_T;
+    // note: R_S_T is transposed, so the row and col should swap
+    vector<vector<double>> R_S_T(res_col, vector<double>(res_row, 0.0));
     mme->matrix_decrypt(R_S_T_ct, R_S_T);
     // 5.1 - tranpose to get R * S
     interval_matrix = mme->transposeMatrix(R_S_T);
@@ -266,7 +272,7 @@ void Client::multiplication_online(int idx) {
     vector<vector<double>> C_minus_R_S = string_to_matrix(C_minus_R_S_str);
 
     // 4 - compute (C - R) * S + R * S
-    INFO_PRINT("C_minus_R_S:     %d x %d", C_minus_R_S.size(), C_minus_R[0].size());
+    INFO_PRINT("C_minus_R_S:     %d x %d", C_minus_R_S.size(), C_minus_R_S[0].size());
     INFO_PRINT("interval_matrix: %d x %d", interval_matrix.size(), interval_matrix[0].size());
     mme->matrix_add_in_plain(C_minus_R_S, interval_matrix, result_matrix);
 }
@@ -278,4 +284,52 @@ void Client::clear_matrix() {
     
     for (vector<double> rm : result_matrix) rm.clear();
     result_matrix.clear();
+}
+
+/**
+ * print some elements in matrix
+ * - rows: numbers of row to print (0 means print all)
+ * - cols: numbers of col to print (0 means print all)
+ */
+void Client::glanceResultMatrix(int rows, int cols) {
+    if (rows > result_matrix.size() || cols > result_matrix.size()) {
+        ERR_PRINT("Printing matrix is out of range, abort");
+        exit(-1);
+    }
+
+    int print_rows = (rows == 0) ? result_matrix.size() : rows;
+    int print_cols = (cols == 0) ? result_matrix[0].size() : cols;
+
+    DEBUG_PRINT("Some elements in result matrix");
+    for (int i = 0; i < print_rows; i++) {
+        cout << "row #" << i << ": ";
+        for (int j = 0; j < print_cols; j++) {
+            cout << result_matrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+/**
+ * print some elements in matrix
+ * - rows: numbers of row to print (0 means print all)
+ * - cols: numbers of col to print (0 means print all)
+ */
+void Client::glanceIntervalMatrix(int rows, int cols) {
+    if (rows > interval_matrix.size() || cols > interval_matrix.size()) {
+        ERR_PRINT("Printing matrix is out of range, abort");
+        exit(-1);
+    }
+
+    int print_rows = (rows == 0) ? interval_matrix.size() : rows;
+    int print_cols = (cols == 0) ? interval_matrix[0].size() : cols;
+
+    DEBUG_PRINT("Some elements in interval matrix");
+    for (int i = 0; i < print_rows; i++) {
+        cout << "row #" << i << ": ";
+        for (int j = 0; j < print_cols; j++) {
+            cout << interval_matrix[i][j] << " ";
+        }
+        cout << endl;
+    }
 }

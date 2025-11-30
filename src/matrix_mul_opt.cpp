@@ -228,8 +228,17 @@ void MMEvaluatorOpt::matrix_encode(vector<vector<double>> &x, vector<Plaintext> 
 }
 
 
-void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<double>> &res, int res_rows, int res_cols) {
+void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<double>> &res) {
     INFO_PRINT("Decrypting matrix");
+
+    int res_rows = res.size();
+    int res_cols = res[0].size();
+
+    // check the initialize the res matrix
+    if (res_rows == 0 || res_cols == 0) {
+        ERR_PRINT("Result matrix is not initialized, abort");
+        exit(-1);
+    }
 
     // decrypt the matrix row by row
     vector<vector<double>> rows;
@@ -242,7 +251,11 @@ void MMEvaluatorOpt::matrix_decrypt(vector<Ciphertext> &x_ct, vector<vector<doub
     }
 
     // reshape the matrix
-    
+    int rows_rows = rows.size();
+    int rows_cols = rows[0].size();
+    for (int i = 0; i < res_rows * res_cols; i++) {
+        res[i / res_cols][i % res_cols] = rows[i / rows_cols][i % rows_cols];
+    }
 }
 
 

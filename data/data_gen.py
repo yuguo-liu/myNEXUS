@@ -67,9 +67,11 @@ k, m, n = 64, 128, 64
 matrix_a, matrix_b = generate_matrices(k, m, n)
 matrix_rnd = generate_matrix(k, m)
 matrix_res = multiply_matrices(matrix_a, matrix_b)
+matrix_int = multiply_matrices(matrix_rnd, matrix_b);
 
 
 save_matrix_to_txt(matrix_a, f"input/matrix_client_input_k_{k}_m_{m}.mtx")
 save_matrix_to_txt(matrix_b, f"input/matrix_server_input_m_{m}_n_{n}.mtx")
 save_matrix_to_txt(matrix_rnd, f"input/matrix_random_input_k_{k}_m_{m}.mtx")
 save_matrix_to_txt(matrix_res, f"calibration/matrix_output_k_{k}_n_{n}.mtx")
+save_matrix_to_txt(matrix_res, f"calibration/matrix_interval_k_{k}_n_{n}.mtx")
